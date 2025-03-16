@@ -24,26 +24,18 @@ namespace SeedChanger
         public override void OnUpdate()
         {
             base.OnUpdate();
-
             if (InGame.instance == null) return;
 
-            if (Settings.PromptSeedChange.JustPressed() && !PopupScreen.instance.IsPopupActive() && (InGameData.CurrentGame.IsSandbox || InGame.instance.GetSimulation().roundTime.elapsed == 0))
+            if (Settings.ShowSeedPopup.JustPressed() && !PopupScreen.instance.IsPopupActive())
             {
-                PromptSeedChange();
-                return;
-            }
-
-            if (Settings.ShowCurrentSeed.JustPressed()) { 
-                int seed = InGame.Bridge.GetFreeplayRoundSeed();
-
-                MelonLogger.Msg($"Current Seed: {seed}");
-
-                PopupScreen.instance.SafelyQueue(screen => screen.ShowSetNamePopup(
-                    "Seed Changer",
-                    $"Current Seed:",
-                    null,
-                    seed.ToString()
-                ));
+                if (InGameData.CurrentGame.IsSandbox || !InGame.instance.IsFreePlay)
+                {
+                    PromptSeedChange();
+                }
+                else
+                {
+                    ShowCurrentSeed();
+                }
             }
         }
 
@@ -59,11 +51,26 @@ namespace SeedChanger
             );
         }
 
+        private void ShowCurrentSeed()
+        {
+            int seed = InGame.Bridge.GetFreeplayRoundSeed();
+
+            MelonLogger.Msg($"Current Seed: {seed}");
+
+            PopupScreen.instance.SafelyQueue(screen => screen.ShowSetNamePopup(
+                "Seed Changer",
+                $"Current Seed:",
+                null,
+                seed.ToString()
+            ));
+        }
+
         private void HandleSeedInput(string s)
         {
             if (int.TryParse(s, out int seed))
             {
-                SetSeed(seed);
+                if (seed != InGame.Bridge.GetFreeplayRoundSeed())
+                    SetSeed(seed);
             }
             else
             {
