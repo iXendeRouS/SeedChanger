@@ -6,6 +6,6 @@
 SeedChanger
 </h1>
 
-Change the seed used to randomly generate freeplay rounds.
+Change and view the seed used to randomly generate freeplay rounds.
 
 [![Requires BTD6 Mod Helper](https://raw.githubusercontent.com/gurrenm3/BTD-Mod-Helper/master/banner.png)](https://github.com/gurrenm3/BTD-Mod-Helper#readme)

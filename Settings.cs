@@ -5,24 +5,16 @@ namespace SeedChanger
 {
     public class Settings : ModSettings
     {
-        public static readonly ModSettingBool PromptSetSeedOnRestart = new(false)
+        public static readonly ModSettingBool EnableMod = new(true);
+
+        public static readonly ModSettingHotkey PromptSeedChange = new(UnityEngine.KeyCode.S)
         {
-            description = "Set seeds do persist after a restart so only enable this if you want to change seeds multiple times."
+            description = "When pressed, show the popup to change seeds. Only works at the start of a game or in sandbox."
         };
 
-        public static readonly ModSettingInt seed = new ModSettingInt(0)
+        public static readonly ModSettingHotkey ShowCurrentSeed = new(UnityEngine.KeyCode.L)
         {
-            description = "Used for autoSetSeedInSandbox and the default value when prompted to change seed. Set to any negative value to disable the mod.",
-        };
-
-        public static readonly ModSettingBool autoSetSeedInSandbox = new(true)
-        {
-            description = "Automatically set the seed in sandbox"
-        };
-
-        public static readonly ModSettingHotkey LogCurrentSeed = new(UnityEngine.KeyCode.S)
-        {
-            description = "Output the current seed when pressed ingame."
+            description = "When pressed, show a popup with and log the current freeplay seed."
         };
     }
 }

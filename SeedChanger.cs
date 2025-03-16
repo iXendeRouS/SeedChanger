@@ -27,42 +27,48 @@ namespace SeedChanger
 
             if (InGame.instance == null) return;
 
-            if (Settings.LogCurrentSeed.JustPressed())
+            if (Settings.PromptSeedChange.JustPressed() && !PopupScreen.instance.IsPopupActive() && (InGameData.CurrentGame.IsSandbox || InGame.instance.GetSimulation().roundTime.elapsed == 0))
             {
-                MelonLogger.Msg($"Current Seed: {InGame.instance.bridge.GetFreeplayRoundSeed()}");
-            }
-        }
-
-        public override void OnMatchStart()
-        {
-            base.OnMatchStart();
-
-            HandleNewGame();
-        }
-
-        public override void OnRestart()
-        {
-            base.OnRestart();
-
-            if (!Settings.PromptSetSeedOnRestart) return;
-
-            HandleNewGame();
-        }
-
-        private void HandleNewGame()
-        {
-            if (Settings.seed < 0) return;
-
-            if (InGameData.CurrentGame.IsSandbox && Settings.autoSetSeedInSandbox)
-            {
-                SetSeed(Settings.seed);
+                PromptSeedChange();
                 return;
             }
 
-            if (InGame.instance.GetSimulation().roundTime.elapsed == 0)
+            if (Settings.ShowCurrentSeed.JustPressed()) { 
+                int seed = InGame.Bridge.GetFreeplayRoundSeed();
+
+                MelonLogger.Msg($"Current Seed: {seed}");
+
+                PopupScreen.instance.SafelyQueue(screen => screen.ShowSetNamePopup(
+                    "Seed Changer",
+                    $"Current Seed:",
+                    null,
+                    seed.ToString()
+                ));
+            }
+        }
+
+        private void PromptSeedChange()
+        {
+            PopupScreen.instance.SafelyQueue(screen =>
+                screen.ShowSetNamePopup(
+                    "Seed Changer",
+                    "Enter new seed: ",
+                    (Action<string>)HandleSeedInput,
+                    InGame.Bridge.GetFreeplayRoundSeed().ToString()
+                )
+            );
+        }
+
+        private void HandleSeedInput(string s)
+        {
+            if (int.TryParse(s, out int seed))
             {
-                PopupScreen.instance.SafelyQueue(screen =>
-                    screen.ShowSetValuePopup("Seed Changer", "Enter new seed:", (Action<int>)((int s) => SetSeed(s)), Settings.seed));
+                SetSeed(seed);
+            }
+            else
+            {
+                int hash = string.IsNullOrEmpty(s) ? 0 : s.GetHashCode();
+                SetSeed(hash);
             }
         }
 
@@ -70,16 +76,29 @@ namespace SeedChanger
         {
             MelonLogger.Msg($"Setting seed to {seed}");
 
-            MapSaveDataModel? saveModel = InGame.instance.CreateCurrentMapSave(InGame.instance.GetSimulation().GetCurrentRound() - 1, InGame.instance.MapDataSaveId);
+            MapSaveDataModel? saveModel = InGame.instance.CreateCurrentMapSave(
+                InGame.instance.GetSimulation().GetCurrentRound() - 1,
+                InGame.instance.MapDataSaveId
+            );
 
             saveModel.freeplayRoundSeed = seed;
 
-            InGame.Bridge.ExecuteContinueFromCheckpoint(InGame.Bridge.MyPlayerNumber, new KonFuze(), ref saveModel, true, false);
+            InGame.Bridge.ExecuteContinueFromCheckpoint(
+                InGame.Bridge.MyPlayerNumber,
+                new KonFuze(),
+                ref saveModel,
+                true,
+                false
+            );
 
             if (!InGameData.CurrentGame.IsSandbox)
             {
                 Game.Player.Data.SetSavedMap(saveModel.savedMapsId, saveModel);
             }
+
+            PopupScreen.instance.SafelyQueue(screen => screen.ShowOkPopup(
+                $"Set seed to {seed}"
+            ));
         }
     }
 }
